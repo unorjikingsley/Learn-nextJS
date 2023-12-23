@@ -14,9 +14,15 @@ import { redirect } from 'next/navigation';
 // define a schema that matches the shape of your form object. This schema will validate the formData before saving it to a database
 const FormSchema = z.object({
   id: z.string(),
-  customerId: z.string(),
-  amount: z.coerce.number(), // set to coerce (change) from a string to a number while also validating its type.
-  status: z.enum(['pending', 'paid']),
+  customerId: z.string({
+    invalid_type_error: 'Please select a customer.',
+  }),
+  amount: z.coerce
+    .number() // set to coerce (change) from a string to a number while also validating its type.
+    .gt(0, { message: 'Please enter an amount greater than $0.' }),
+  status: z.enum(['pending', 'paid'], {
+    invalid_type_error: 'Please select an invoice status.',
+  }),
   date: z.string(),
 });
 
@@ -26,28 +32,53 @@ const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 
 // create a new async function that accepts formData
-export async function createInvoice(formData: FormData) {
+// export async function createInvoice(formData: FormData) {
   // const rawFormData = {
   //   customerId: formData.get('customerId'),
   //   amount: formData.get('amount'),
   //   status: formData.get('status'),
   // };
 
-  // Test it out:
-  // console.log(rawFormData); // see the data you just entered into the form logged in your terminal
-
-  const { customerId, amount, status } = CreateInvoice.parse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
-  });
   // Tip: If you're working with forms that have many fields, you may want to consider
   // using the entries() method with JavaScript's Object.fromEntries(). For example:
   // const rawFormData = Object.fromEntries(formData.entries())
 
+  // Test it out:
+  // console.log(rawFormData); // see the data you just entered into the form logged in your terminal
+
+// This is temporary until @types/react-dom is updated
+export type State = {
+  errors?: {
+    customerId?: string[];
+    amount?: string[];
+    status?: string[];
+  };
+  message?: string | null;
+};
+
+export async function createInvoice(prevState: State, formData: FormData) {
+  // Validate form fields using Zod
+  const validatedFields = CreateInvoice.safeParse({
+    // safeParse() will return an object containing either a success or error field. This will help handle validation more gracefully without having put this logic inside the try/catch block.
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+
+  // If form validation fails, return errors early. Otherwise, continue.
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Invoice.',
+    };
+  }
+
+  // Prepare data for insertion into the database
+  const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100; // convert the amount into cents for accuracy
   const date = new Date().toISOString().split('T')[0]; // create a new date with the format "YYYY-MM-DD" for the invoice's creation
 
+  // Insert data into the database
   try {
     await sql`
     INSERT INTO invoices (customer_id, amount, status, date)
@@ -57,19 +88,28 @@ export async function createInvoice(formData: FormData) {
     return { message: 'Database Error: Failed to Update Invoice.' };
   }
 
+  // Revalidate the cache for the invoices page and redirect the user.
   revalidatePath('/dashboard/invoices');
   // you want to clear this cache and trigger a new request to the server. You can do this with the revalidatePath function and fresh data will be fetched from the server.
 
   redirect('/dashboard/invoices'); // redirect the user back to the /dashboard/invoices page
 }
 
-export async function updateInvoice(id: string, formData: FormData) {
-  const { customerId, amount, status } = UpdateInvoice.parse({
+export async function updateInvoice(id: string, prevState: State, formData: FormData) {
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
 
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
 
   try {
@@ -87,7 +127,7 @@ export async function updateInvoice(id: string, formData: FormData) {
 }
 
 export async function deleteInvoice(id: string) {
-  throw new Error('Failed to Delete Invoice');  // intentionally throw an error
+  // throw new Error('Failed to Delete Invoice');  // intentionally throw an error
 
   try {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
