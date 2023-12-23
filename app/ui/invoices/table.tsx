@@ -13,6 +13,8 @@ export default async function InvoicesTable({
 }) {
   const invoices = await fetchFilteredInvoices(query, currentPage);
 
+  // query and currentPage, are passed to the fetchFilteredInvoices() function which 
+  // returns the invoices that match the query.
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
@@ -35,10 +37,13 @@ export default async function InvoicesTable({
                       />
                       <p>{invoice.name}</p>
                     </div>
+
                     <p className="text-sm text-gray-500">{invoice.email}</p>
                   </div>
+
                   <InvoiceStatus status={invoice.status} />
                 </div>
+
                 <div className="flex w-full items-center justify-between pt-4">
                   <div>
                     <p className="text-xl font-medium">
@@ -46,6 +51,7 @@ export default async function InvoicesTable({
                     </p>
                     <p>{formatDateToLocal(invoice.date)}</p>
                   </div>
+
                   <div className="flex justify-end gap-2">
                     <UpdateInvoice id={invoice.id} />
                     <DeleteInvoice id={invoice.id} />
@@ -54,29 +60,37 @@ export default async function InvoicesTable({
               </div>
             ))}
           </div>
+
           <table className="hidden min-w-full text-gray-900 md:table">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-4 py-5 font-medium sm:pl-6">
                   Customer
                 </th>
+
                 <th scope="col" className="px-3 py-5 font-medium">
                   Email
                 </th>
+
                 <th scope="col" className="px-3 py-5 font-medium">
                   Amount
                 </th>
+
                 <th scope="col" className="px-3 py-5 font-medium">
                   Date
                 </th>
+
                 <th scope="col" className="px-3 py-5 font-medium">
                   Status
                 </th>
+
                 <th scope="col" className="relative py-3 pl-6 pr-3">
                   <span className="sr-only">Edit</span>
                 </th>
+
               </tr>
             </thead>
+
             <tbody className="bg-white">
               {invoices?.map((invoice) => (
                 <tr
@@ -122,3 +136,11 @@ export default async function InvoicesTable({
     </div>
   );
 }
+
+// When to use the useSearchParams() hook vs. the searchParams prop?
+
+// You might have noticed you used two different ways to extract search params. Whether you use one or the other depends on whether you're working on the client or the server.
+
+// <Search> is a Client Component, so you used the useSearchParams() hook to access the params from the client.
+// <Table> is a Server Component that fetches its own data, so you can pass the searchParams prop from the page to the component.
+// As a general rule, if you want to read the params from the client, use the useSearchParams() hook as this avoids having to go back to the server.
