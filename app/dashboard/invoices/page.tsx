@@ -6,6 +6,9 @@ import { lusitana } from '@/app/ui/fonts';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
 import { Suspense } from 'react';
 
+import { fetchInvoicesPages } from '@/app/lib/data';
+// fetchInvoicesPages returns the total number of pages based on the search query.
+
 export default async function Page({
   // Page components accept a prop called searchParams, so you can pass the current URL params to the <Table> component.
   
@@ -18,6 +21,8 @@ export default async function Page({
 }) {
     const query = searchParams?.query || '';
     const currentPage = Number(searchParams?.page) || 1;
+
+    const totalPages = await fetchInvoicesPages(query);  // pagination
 
   return (
     <div className="w-full">
@@ -35,7 +40,7 @@ export default async function Page({
       </Suspense>
     
       <div className="mt-5 flex w-full justify-center">
-        {/* <Pagination totalPages={totalPages} /> */}
+        <Pagination totalPages={totalPages} />
       </div>
     </div>
   );
