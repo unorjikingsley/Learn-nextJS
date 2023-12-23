@@ -48,10 +48,14 @@ export async function createInvoice(formData: FormData) {
   const amountInCents = amount * 100; // convert the amount into cents for accuracy
   const date = new Date().toISOString().split('T')[0]; // create a new date with the format "YYYY-MM-DD" for the invoice's creation
 
-  await sql`
+  try {
+    await sql`
     INSERT INTO invoices (customer_id, amount, status, date)
     VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
   `; // insert data to DB
+  } catch (error) {
+    return { message: 'Database Error: Failed to Update Invoice.' };
+  }
 
   revalidatePath('/dashboard/invoices');
   // you want to clear this cache and trigger a new request to the server. You can do this with the revalidatePath function and fresh data will be fetched from the server.
@@ -68,17 +72,28 @@ export async function updateInvoice(id: string, formData: FormData) {
 
   const amountInCents = amount * 100;
 
-  await sql`
+  try {
+    await sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
     WHERE id = ${id}
   `;
+  } catch (error) {
+    return { message: 'Database Error: Failed to Update Invoice.' };
+  }
 
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
 }
 
 export async function deleteInvoice(id: string) {
-  await sql`DELETE FROM invoices WHERE id = ${id}`;
-  revalidatePath('/dashboard/invoices');
+  throw new Error('Failed to Delete Invoice');  // intentionally throw an error
+
+  try {
+    await sql`DELETE FROM invoices WHERE id = ${id}`;
+    revalidatePath('/dashboard/invoices');
+    return { message: 'Deleted Invoice.' };
+  } catch (error) {
+    return { message: 'Database Error: Failed to Delete Invoice.' };
+  }
 }

@@ -7,6 +7,9 @@ import Form from '@/app/ui/invoices/edit-form';
 import Breadcrumbs from '@/app/ui/invoices/breadcrumbs';
 import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
 
+import { notFound } from 'next/navigation';
+// when an invoice is not in the DB, we use notFound to handle it
+
 // page components also accept a prop called params which you can use to access the id. Update your <Page> component to receive the prop
 export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
@@ -18,6 +21,10 @@ export default async function Page({ params }: { params: { id: string } }) {
     fetchInvoiceById(id),
     fetchCustomers(),
   ]);
+
+  if (!invoice) {
+    notFound();
+  }
 
   return (
     <main>
