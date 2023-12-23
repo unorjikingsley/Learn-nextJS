@@ -11,6 +11,10 @@ import { sql } from '@vercel/postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+// connect the auth logic with your login form
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
+
 // define a schema that matches the shape of your form object. This schema will validate the formData before saving it to a database
 const FormSchema = z.object({
   id: z.string(),
@@ -137,3 +141,30 @@ export async function deleteInvoice(id: string) {
     return { message: 'Database Error: Failed to Delete Invoice.' };
   }
 }
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}
+
+// If there's a 'CredentialsSignin' error, you want to show an appropriate error message. 
+// You can learn about NextAuth.js errors in the documentation - https://authjs.dev/reference/core/errors/
+
+// Finally, in your login-form.tsx component, you can use React's useFormState to call 
+// the server action and handle form errors, and use useFormStatus to handle the pending 
+// state of the form: aap/ui/login-form.tsx
+
