@@ -10,9 +10,17 @@ import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
 import { notFound } from 'next/navigation';
 // when an invoice is not in the DB, we use notFound to handle it
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Update Invoice',
+  description: 'Invoices are being updated by the user',
+};
+
 // page components also accept a prop called params which you can use to access the id. Update your <Page> component to receive the prop
 export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
+  
 
   //   Import a new function called fetchInvoiceById and pass the id as an argument.
   // Import fetchCustomers to fetch the customer names for the dropdown.

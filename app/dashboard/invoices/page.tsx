@@ -9,6 +9,21 @@ import { Suspense } from 'react';
 import { fetchInvoicesPages } from '@/app/lib/data';
 // fetchInvoicesPages returns the total number of pages based on the search query.
 
+import { Metadata } from 'next';
+//  if you want to add a custom title for a specific page? You can do this by adding a 
+// metadata object to the page itself. Metadata in nested pages will override the 
+// metadata in the parent. but we are repeating the title of the application in every 
+// page. If something changes, like the company name, you'd have to update it on every 
+// page. 
+
+// Instead, you can use the title.template field in the metadata object to define a 
+// template for your page titles. this is done in the root layout
+// Read more - https://nextjs.org/docs/app/api-reference/functions/generate-metadata
+
+export const metadata: Metadata = {
+  title: 'Invoices',
+};
+
 export default async function Page({
   // Page components accept a prop called searchParams, so you can pass the current URL params to the <Table> component.
   
